@@ -149,6 +149,40 @@
                     "optimization": false,
                     "extractLicenses": false,
                     "sourceMap": true
+                },
+                "capacitor": {
+                    "baseHref": "./",
+                    "serviceWorker": false,
+                    "budgets": [
+                        {
+                            "type": "initial",
+                            "maximumWarning": "4.5mb",
+                            "maximumError": "5mb"
+                        },
+                        {
+                            "type": "anyComponentStyle",
+                            "maximumWarning": "12.5kb",
+                            "maximumError": "15kb"
+                        }
+                    ],
+                    "outputHashing": "none",
+                    "optimization": {
+                        "scripts": true,
+                        "styles": {
+                            "minify": true,
+                            "inlineCritical": false,
+                            "removeSpecialComments": true
+                        },
+                        "fonts": true
+                    },
+                    "extractLicenses": true,
+                    "sourceMap": true,
+                    "fileReplacements": [
+                        {
+                            "replace": "apps/web/src/environments/environment.ts",
+                            "with": "apps/web/src/environments/environment.prod.ts"
+                        }
+                    ]
                 }
             },
             "defaultConfiguration": "production"

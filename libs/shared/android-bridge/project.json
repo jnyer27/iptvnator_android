@@ -1,0 +1,20 @@
+{
+    "name": "android-bridge",
+    "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+    "sourceRoot": "libs/shared/android-bridge/src",
+    "projectType": "library",
+    "tags": ["scope:shared", "domain:shared-runtime", "type:data-access"],
+    "targets": {
+        "test": {
+            "executor": "@nx/jest:jest",
+            "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+            "options": {
+                "jestConfig": "libs/shared/android-bridge/jest.config.ts",
+                "tsConfig": "libs/shared/android-bridge/tsconfig.spec.json"
+            }
+        },
+        "lint": {
+            "command": "eslint \"libs/shared/android-bridge/**/*.ts\""
+        }
+    }
+}

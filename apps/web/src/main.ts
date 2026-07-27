@@ -1,9 +1,11 @@
 import { bootstrapApplication } from '@angular/platform-browser';
+import { installAndroidBridge } from '@iptvnator/shared/android-bridge';
 import { registerAppDateLocales } from './app/app-date-locales';
 import { AppComponent } from './app/app.component';
 import { appConfig } from './app/app.config';
 
 registerAppDateLocales();
+installAndroidBridge();
 
 bootstrapApplication(AppComponent, appConfig)
     .then(() => {

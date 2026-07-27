@@ -96,6 +96,9 @@
                 "libs/ui/remote-control/src/index.ts"
             ],
             "@iptvnator/shared/database": ["libs/shared/database/src/index.ts"],
+            "@iptvnator/shared/android-bridge": [
+                "libs/shared/android-bridge/src/index.ts"
+            ],
             "@iptvnator/shared/database/schema": [
                 "libs/shared/database/src/lib/schema.ts"
             ],
