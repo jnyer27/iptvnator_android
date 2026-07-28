@@ -97,7 +97,11 @@ export class PortalChannelsListComponent implements AfterViewInit, OnDestroy {
         viewChild.required<MatMenuTrigger>('contextMenuTrigger');
     readonly contextMenuChannel = signal<XtreamChannelListItem | null>(null);
     readonly contextMenuPosition = signal({ x: '0px', y: '0px' });
-    readonly supportsEpg = this.runtime.supportsEpg;
+    // Not `runtime.supportsEpg`: that also requires the Electron-only local
+    // XMLTV import/freshness/search stack, unrelated to whether the
+    // provider's own per-channel `get_short_epg` can be requested directly
+    // for the "on now" row summary below.
+    readonly supportsEpg = this.runtime.supportsXtreamEpgRequests;
     readonly supportsEpgMapping = this.runtime.supportsEpgMapping;
     readonly isSelectedTypeContentLoading =
         this.xtreamStore.selectedTypeContentLoading;

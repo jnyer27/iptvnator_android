@@ -276,6 +276,20 @@ export class RuntimeCapabilitiesService {
         );
     }
 
+    /**
+     * Whether the provider's own per-channel EPG (`get_short_epg` /
+     * `get_simple_data_table`) can be requested directly. Deliberately
+     * narrower than `supportsEpg`, which also requires the Electron-only
+     * local XMLTV import/freshness/search stack — unrelated to whether a
+     * plain Xtream API call can be made. PWA is intentionally excluded here
+     * (unlike `supportsXtreamSectionNavigation`): it has no bridge method to
+     * gate on, and EPG there is an existing, deliberate off switch — see
+     * withEpg()'s "does not load Xtream or XMLTV EPG in browser/PWA mode".
+     */
+    get supportsXtreamEpgRequests(): boolean {
+        return this.hasElectronMethod('xtreamRequest');
+    }
+
     private hasElectronMethod(methodName: string): boolean {
         const bridge = this.electronBridge as
             | Record<string, unknown>

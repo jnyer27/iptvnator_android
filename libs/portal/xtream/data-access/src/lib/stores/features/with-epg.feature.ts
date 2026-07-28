@@ -80,7 +80,16 @@ export function withEpg() {
             const runtime = inject(RuntimeCapabilitiesService);
             const settingsStore = inject(SettingsStore);
 
-            const supportsEpg = (): boolean => runtime.supportsEpg;
+            // Gates on direct Xtream API access (get_short_epg /
+            // get_simple_data_table), not `runtime.supportsEpg` — that flag
+            // also requires the Electron-only local XMLTV import/freshness/
+            // search stack, which has nothing to do with the provider's own
+            // per-channel "on now" EPG. Gating on it here meant any bridge
+            // exposing `xtreamRequest` without that full stack (e.g. the
+            // Android port) never fetched EPG at all, even though the
+            // request itself works fine.
+            const supportsEpg = (): boolean =>
+                runtime.supportsXtreamEpgRequests;
 
             /**
              * Helper to get credentials from parent store

@@ -134,6 +134,9 @@ describe('PortalChannelsListComponent', () => {
                         get supportsEpg() {
                             return Boolean(window.electron);
                         },
+                        get supportsXtreamEpgRequests() {
+                            return Boolean(window.electron);
+                        },
                     },
                 },
                 {

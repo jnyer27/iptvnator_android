@@ -43,7 +43,7 @@ function buildProgram(
 }
 
 interface TestStoreSetup {
-    appEnvironment?: 'electron' | 'pwa';
+    appEnvironment?: 'electron' | 'pwa' | 'android';
     selectedItem: { xtream_id: number; epg_channel_id?: string | null };
     preferUploaded?: boolean;
 }
@@ -80,7 +80,17 @@ function configureStore(setup: TestStoreSetup) {
             {
                 provide: RuntimeCapabilitiesService,
                 useValue: {
+                    // The Android bridge exposes `xtreamRequest` (so
+                    // `supportsXtreamEpgRequests` is true) but not the full
+                    // Electron-only local XMLTV import/freshness/search
+                    // stack `supportsEpg` also requires — this is the exact
+                    // shape that used to silently disable EPG on Android.
                     get supportsEpg() {
+                        return (
+                            (setup.appEnvironment ?? 'electron') === 'electron'
+                        );
+                    },
+                    get supportsXtreamEpgRequests() {
                         return (setup.appEnvironment ?? 'electron') !== 'pwa';
                     },
                 },
@@ -161,6 +171,21 @@ describe('withEpg', () => {
 
         expect(result).toEqual([]);
         expect(fallbackService.getProgramsForChannel).not.toHaveBeenCalled();
+    });
+
+    it('loads provider EPG on a bridge with xtreamRequest but no local XMLTV stack (e.g. Android)', async () => {
+        const { store, xtreamApiService } = configureStore({
+            appEnvironment: 'android',
+            selectedItem: { xtream_id: 101 },
+        });
+        const now = Math.floor(Date.now() / 1000);
+        const programs = [buildProgram('Current Show', now - 300, now + 1800)];
+        xtreamApiService.getFullEpg.mockResolvedValue(programs);
+
+        const result = await store.loadEpg();
+
+        expect(xtreamApiService.getFullEpg).toHaveBeenCalled();
+        expect(result).toEqual(programs);
     });
 
     it('does not load Xtream or XMLTV EPG in browser/PWA mode', async () => {

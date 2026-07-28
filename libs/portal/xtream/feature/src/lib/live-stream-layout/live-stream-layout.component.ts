@@ -136,7 +136,10 @@ export class LiveStreamLayoutComponent implements OnInit, OnDestroy {
     readonly selectedCategoryId = this.xtreamStore.selectedCategoryId;
     readonly liveChannelSortMode = signal<PortalChannelSortMode>('server');
     readonly isElectron = this.runtime.isElectron;
-    readonly supportsEpg = this.runtime.supportsEpg;
+    // Not `runtime.supportsEpg`: that also requires the Electron-only local
+    // XMLTV import/freshness/search stack, unrelated to whether the
+    // provider's own per-channel `get_short_epg` can power this EPG panel.
+    readonly supportsEpg = this.runtime.supportsXtreamEpgRequests;
     readonly isWorkspaceLayout = isWorkspaceLayoutRoute(this.route);
     private readonly routeSearchTerm = queryParamSignal(
         this.route,

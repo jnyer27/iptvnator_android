@@ -289,6 +289,9 @@ describe('LiveStreamLayoutComponent', () => {
                         get supportsEpg() {
                             return Boolean(window.electron);
                         },
+                        get supportsXtreamEpgRequests() {
+                            return Boolean(window.electron);
+                        },
                         get isElectron() {
                             return Boolean(window.electron);
                         },
