@@ -24,6 +24,9 @@ import * as categoryStore from './category-store';
 import * as contentStore from './content-store';
 import * as nativePlayer from './native-player';
 import * as settingsBridge from './settings-bridge';
+import * as favoritesStore from './favorites-store';
+import * as recentlyViewedStore from './recently-viewed-store';
+import * as playbackPositionStore from './playback-position-store';
 
 type AndroidBridge = Partial<ElectronBridgeApi> & { platform: string };
 
@@ -76,6 +79,37 @@ function buildBridge(): AndroidBridge {
         dbGetContentByXtreamId: contentStore.dbGetContentByXtreamId,
         dbSearchContent: contentStore.dbSearchContent,
         dbClearXtreamImportCache: contentStore.dbClearXtreamImportCache,
+        dbSetContentBackdropIfMissing: contentStore.dbSetContentBackdropIfMissing,
+
+        // Favorites (per-playlist and global)
+        dbAddFavorite: favoritesStore.dbAddFavorite,
+        dbRemoveFavorite: favoritesStore.dbRemoveFavorite,
+        dbIsFavorite: favoritesStore.dbIsFavorite,
+        dbGetFavorites: favoritesStore.dbGetFavorites,
+        dbGetGlobalFavorites: favoritesStore.dbGetGlobalFavorites,
+        dbGetAllGlobalFavorites: favoritesStore.dbGetAllGlobalFavorites,
+        dbReorderGlobalFavorites: favoritesStore.dbReorderGlobalFavorites,
+
+        // Recently viewed (per-playlist and global)
+        dbGetRecentlyViewed: recentlyViewedStore.dbGetRecentlyViewed,
+        dbClearRecentlyViewed: recentlyViewedStore.dbClearRecentlyViewed,
+        dbGetRecentItems: recentlyViewedStore.dbGetRecentItems,
+        dbAddRecentItem: recentlyViewedStore.dbAddRecentItem,
+        dbClearPlaylistRecentItems: recentlyViewedStore.dbClearPlaylistRecentItems,
+        dbRemoveRecentItem: recentlyViewedStore.dbRemoveRecentItem,
+        dbRemoveRecentItemsBatch: recentlyViewedStore.dbRemoveRecentItemsBatch,
+
+        // Playback position (resume)
+        dbSavePlaybackPosition: playbackPositionStore.dbSavePlaybackPosition,
+        dbGetPlaybackPosition: playbackPositionStore.dbGetPlaybackPosition,
+        dbGetSeriesPlaybackPositions:
+            playbackPositionStore.dbGetSeriesPlaybackPositions,
+        dbGetRecentPlaybackPositions:
+            playbackPositionStore.dbGetRecentPlaybackPositions,
+        dbGetAllPlaybackPositions: playbackPositionStore.dbGetAllPlaybackPositions,
+        dbClearAllPlaybackPositions:
+            playbackPositionStore.dbClearAllPlaybackPositions,
+        dbClearPlaybackPosition: playbackPositionStore.dbClearPlaybackPosition,
 
         // Native fullscreen ExoPlayer Activity, standing in for the
         // desktop external MPV/VLC processes.

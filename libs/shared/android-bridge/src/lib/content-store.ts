@@ -244,3 +244,27 @@ export async function dbClearXtreamImportCache(
     ]);
     return { success: true };
 }
+
+/** Shared by favorites/recently-viewed "add" flows to backfill a missing backdrop. */
+export async function persistContentBackdropIfMissing(
+    contentId: number,
+    backdropUrl?: string
+): Promise<void> {
+    const normalized = backdropUrl?.trim();
+    if (!normalized) {
+        return;
+    }
+    await run(
+        `UPDATE content SET backdrop_url = ?
+         WHERE id = ? AND (backdrop_url IS NULL OR backdrop_url = '')`,
+        [normalized, contentId]
+    );
+}
+
+export async function dbSetContentBackdropIfMissing(
+    contentId: number,
+    backdropUrl?: string
+): Promise<{ success: boolean }> {
+    await persistContentBackdropIfMissing(contentId, backdropUrl);
+    return { success: true };
+}
