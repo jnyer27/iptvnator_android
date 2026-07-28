@@ -11,6 +11,7 @@ import {
     Theme,
     VideoPlayer,
 } from '@iptvnator/shared/interfaces';
+import { RuntimeCapabilitiesService } from './runtime-capabilities.service';
 import { SettingsStore } from './settings-store.service';
 
 const expectedDashboardRails = (
@@ -45,6 +46,7 @@ describe('SettingsStore dashboard rail settings', () => {
         injector = Injector.create({
             providers: [
                 SettingsStore,
+                RuntimeCapabilitiesService,
                 {
                     provide: StorageMap,
                     useValue: storage,
@@ -114,6 +116,53 @@ describe('SettingsStore dashboard rail settings', () => {
         expect(store.getSettings().dashboardRails).toEqual(
             expectedDashboardRails()
         );
+    });
+
+    describe('Android fresh-install player default', () => {
+        const originalElectron = window.electron;
+
+        afterEach(() => {
+            window.electron = originalElectron;
+        });
+
+        it('defaults to MPV (native ExoPlayer) and persists it when no settings are stored yet', async () => {
+            window.electron = {
+                platform: 'android',
+            } as unknown as typeof window.electron;
+            const store = injector.get(SettingsStore);
+
+            await store.loadSettings();
+
+            expect(store.getSettings().player).toBe(VideoPlayer.MPV);
+            expect(storage.set).toHaveBeenCalledWith(
+                STORE_KEY.Settings,
+                expect.objectContaining({ player: VideoPlayer.MPV })
+            );
+        });
+
+        it('leaves the shared VideoJS default alone once a choice is already persisted', async () => {
+            window.electron = {
+                platform: 'android',
+            } as unknown as typeof window.electron;
+            storedSettings = { player: VideoPlayer.VideoJs };
+            const store = injector.get(SettingsStore);
+
+            await store.loadSettings();
+
+            expect(store.getSettings().player).toBe(VideoPlayer.VideoJs);
+        });
+
+        it('leaves the shared VideoJS default alone on non-Android platforms', async () => {
+            window.electron = {
+                platform: 'darwin',
+            } as unknown as typeof window.electron;
+            const store = injector.get(SettingsStore);
+
+            await store.loadSettings();
+
+            expect(store.getSettings().player).toBe(VideoPlayer.VideoJs);
+            expect(storage.set).not.toHaveBeenCalled();
+        });
     });
 
     it('defaults shared web controls to false when the stored field is missing', async () => {

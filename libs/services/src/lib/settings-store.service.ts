@@ -9,6 +9,7 @@ import {
 } from '@ngrx/signals';
 import { StorageMap } from '@ngx-pwa/local-storage';
 import { firstValueFrom } from 'rxjs';
+import { RuntimeCapabilitiesService } from './runtime-capabilities.service';
 import {
     DEFAULT_DASHBOARD_RAILS_SETTINGS,
     DEFAULT_TMDB_SETTINGS,
@@ -112,6 +113,7 @@ export const SettingsStore = signalStore(
         ),
     })),
     withMethods((store, storage = inject(StorageMap)) => {
+        const runtime = inject(RuntimeCapabilitiesService);
         let settingsLoadPromise: Promise<void> | undefined;
 
         return {
@@ -142,6 +144,22 @@ export const SettingsStore = signalStore(
                                     error
                                 );
                             }
+                        );
+                    } else if (runtime.platform === 'android') {
+                        // Fresh install, no persisted choice yet. The
+                        // WebView's built-in players (VideoJS/HTML5/ArtPlayer)
+                        // render <video> through Chromium's hardware video
+                        // decode + SurfaceTexture compositing path, which is
+                        // unreliable across Android WebView builds/devices.
+                        // The native player (routed the same way as a
+                        // manually-selected "MPV" external player) uses
+                        // Media3 ExoPlayer directly instead, avoiding that
+                        // WebView compositing path entirely. Persisted so it
+                        // behaves like an explicit user choice from here on
+                        // and Settings shows it correctly.
+                        patchState(store, { player: VideoPlayer.MPV });
+                        await firstValueFrom(
+                            storage.set(STORE_KEY.Settings, this.getSettings())
                         );
                     }
                 })().catch((error) => {
