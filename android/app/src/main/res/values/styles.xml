@@ -13,6 +13,11 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:background">@null</item>
+        <!-- Without this, the text-selection contextual action bar (the
+             Cut/Copy/Paste/Share popup Android shows on long-press) has
+             nowhere to render in a NoActionBar theme and silently never
+             appears, in the WebView or any native EditText. -->
+        <item name="windowActionModeOverlay">true</item>
     </style>
 
 
