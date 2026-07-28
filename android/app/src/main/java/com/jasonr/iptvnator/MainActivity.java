@@ -7,6 +7,7 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(IptvPlayerPlugin.class);
+        registerPlugin(XtreamHttpPlugin.class);
         super.onCreate(savedInstanceState);
     }
 }

@@ -3,17 +3,42 @@
  * `apps/electron-backend/src/app/events/xtream.events.ts`: same
  * `player_api.php` URL construction and VLC User-Agent spoofing (some Xtream
  * panels sit behind a WAF that challenges generic browser UAs but allowlists
- * known IPTV client UAs), using `CapacitorHttp` instead of `axios` to bypass
- * the WebView's CORS restrictions.
+ * known IPTV client UAs).
+ *
+ * Uses the app-local `XtreamHttp` Capacitor plugin (Kotlin, real OkHttp)
+ * rather than `@capacitor/core`'s `CapacitorHttp` (`HttpURLConnection` on
+ * Android). Verified directly against a real account/server: a known-working
+ * Android app using OkHttp gets a normal response from some panels while
+ * `curl`, the JDK's `HttpClient`, and `HttpURLConnection`-based
+ * `CapacitorHttp` all get a decoy 404 from the same server, same network
+ * path, same credentials, same moment. Matching the proven client stack
+ * sidesteps that rather than chasing the exact server-side rule.
  *
  * Note: unlike the desktop version, in-flight requests cannot be cancelled —
- * `CapacitorHttp` calls run as a single native bridge call with no abort
- * hook. `xtreamCancelSession` is a no-op stub kept only so callers that
- * optionally invoke it don't need a feature check.
+ * each call is a single native bridge round-trip with no abort hook.
+ * `xtreamCancelSession` is a no-op stub kept only so callers that optionally
+ * invoke it don't need a feature check.
  */
 
-import { CapacitorHttp } from '@capacitor/core';
+import { registerPlugin } from '@capacitor/core';
 import { normalizeXtreamServerUrl } from '@iptvnator/shared/interfaces';
+
+interface XtreamHttpResponse {
+    status: number;
+    data: string;
+    headers: Record<string, string>;
+    url: string;
+}
+
+interface XtreamHttpPlugin {
+    get(options: {
+        url: string;
+        method?: 'GET' | 'HEAD';
+        headers?: Record<string, string>;
+    }): Promise<XtreamHttpResponse>;
+}
+
+const XtreamHttp = registerPlugin<XtreamHttpPlugin>('XtreamHttp');
 
 const XTREAM_CLIENT_USER_AGENT = 'VLC/3.0.18 LibVLC/3.0.18';
 
@@ -29,6 +54,14 @@ function buildXtreamApiUrl(url: string, params: Record<string, string>): string 
     return apiUrl.toString();
 }
 
+function parseJsonBody(data: string): unknown {
+    try {
+        return JSON.parse(data);
+    } catch {
+        return data;
+    }
+}
+
 export async function xtreamRequest(payload: {
     url: string;
     params: Record<string, string>;
@@ -36,14 +69,12 @@ export async function xtreamRequest(payload: {
     const apiUrl = buildXtreamApiUrl(payload.url, payload.params);
 
     try {
-        const response = await CapacitorHttp.get({
+        const response = await XtreamHttp.get({
             url: apiUrl,
             headers: {
                 'User-Agent': XTREAM_CLIENT_USER_AGENT,
                 Accept: 'application/json',
             },
-            connectTimeout: 30000,
-            readTimeout: 30000,
         });
 
         if (response.status >= 400) {
@@ -54,7 +85,10 @@ export async function xtreamRequest(payload: {
             };
         }
 
-        return { payload: response.data, action: payload.params?.action };
+        return {
+            payload: parseJsonBody(response.data),
+            action: payload.params?.action,
+        };
     } catch (error) {
         if (error && typeof error === 'object' && 'type' in error) {
             throw error;
@@ -82,24 +116,14 @@ export async function xtreamProbeUrl(
     method: 'GET' | 'HEAD' = 'HEAD'
 ): Promise<{ status: number; url: string; error?: string }> {
     try {
-        const response =
-            method === 'HEAD'
-                ? await CapacitorHttp.request({
-                      method: 'HEAD',
-                      url,
-                      headers: { 'User-Agent': XTREAM_CLIENT_USER_AGENT },
-                      connectTimeout: 10000,
-                      readTimeout: 10000,
-                  })
-                : await CapacitorHttp.get({
-                      url,
-                      headers: {
-                          'User-Agent': XTREAM_CLIENT_USER_AGENT,
-                          Range: 'bytes=0-4095',
-                      },
-                      connectTimeout: 10000,
-                      readTimeout: 10000,
-                  });
+        const response = await XtreamHttp.get({
+            url,
+            method,
+            headers: {
+                'User-Agent': XTREAM_CLIENT_USER_AGENT,
+                ...(method === 'GET' ? { Range: 'bytes=0-4095' } : {}),
+            },
+        });
 
         return { status: response.status, url };
     } catch (error) {
